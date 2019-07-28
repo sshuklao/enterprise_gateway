@@ -8,6 +8,7 @@ ENV PATH=$ANACONDA_HOME/bin:$PATH
 ENV PYSPARK_PYTHON=$ANACONDA_HOME/bin/python
 
 RUN yum install -y gcc krb5-devel; yum clean all
+RUN yum install -y java-1.8.0-openjdk-devel; yum clean all
 
 COPY yarn-site.xml.template /usr/local/hadoop/etc/hadoop/
 
@@ -16,13 +17,6 @@ RUN cd /tmp && \
 	curl -LO 'http://vault.centos.org/6.9/os/Source/SPackages/rsyslog-5.8.10-10.el6_6.src.rpm' && \
 	rpm -i /tmp/rsyslog-5.8.10-10.el6_6.src.rpm && \
 	rm -f /tmp/rsyslog-5.8.10-10.el6_6.src.rpm
-
-# Update Java
-RUN cd /tmp && \
-	curl -LO 'http://download.oracle.com/otn-pub/java/jdk/8u201-b09/42970487e3af4f5aa5bca3f542482c60/jdk-8u201-linux-x64.rpm' -H 'Cookie: oraclelicense=accept-securebackup-cookie' && \
-	rpm -e jdk-1.7.0_71-fcs.x86_64 && \
-	rpm -i /tmp/jdk-8u201-linux-x64.rpm && \
-	rm -f /tmp/jdk-8u201-linux-x64.rpm
 
 # Install Anaconda
 RUN cd /tmp && \
