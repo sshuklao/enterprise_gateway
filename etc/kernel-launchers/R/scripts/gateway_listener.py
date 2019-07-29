@@ -74,7 +74,7 @@ def get_gateway_request(sock):
         if type(e) is not timeout:
             # fabricate shutdown.
             print("Listener encountered error '{}', shutting down...".format(e))
-            shutdown = dict() 
+            shutdown = dict()
             shutdown['shutdown'] = 1
             request_info = shutdown
     finally:
@@ -90,10 +90,10 @@ def gateway_listener(sock, parent_pid):
         request = get_gateway_request(sock)
         if request:
             print("Received request {}".format(request))
-            if request.get('signum'):
+            if request.get('signum') is not None:
                 signum = int(request.get('signum'))
                 os.kill(int(parent_pid), signum)
-            elif request.get('shutdown'):
+            if request.get('shutdown') is not None:
                 shutdown = bool(request.get('shutdown'))
 
         else:  # check parent
@@ -129,7 +129,7 @@ def setup_gateway_listener(fname, parent_pid, lower_port, upper_port):
     # Add in the gateway_socket and parent_pid fields...
     config['comm_port'] = gateway_socket.getsockname()[1]
     config['pid'] = parent_pid
-    
+
     with open(fname, 'w') as f:
         f.write(json.dumps(config, indent=2))
     return

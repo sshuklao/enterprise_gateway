@@ -174,7 +174,6 @@ class RemoteKernelManager(KernelGatewayIOLoopKernelManager):
         """Need to override base method because it tries to send a signal to the (local)
            process group - so we bypass that code this way.
         """
-        self.log.debug("RemoteKernelManager.signal_kernel({})".format(signum))
         if self.has_kernel:
             if signum == signal.SIGINT:
                 if self.sigint_value is None:

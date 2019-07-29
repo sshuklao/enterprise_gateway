@@ -4,6 +4,7 @@
 
 import os
 import json
+import signal
 import time
 from subprocess import STDOUT
 from socket import *
@@ -142,3 +143,8 @@ class DistributedProcessProxy(RemoteProcessProxy):
             timeout_message = "KernelID: '{}' launch timeout due to: {}".format(self.kernel_id, reason)
             self.kill()
             self.log_and_raise(http_status_code=500, reason=timeout_message)
+
+    def shutdown_listener(self):
+        """Ensure that kernel process is terminated."""
+        self.send_signal(signal.SIGTERM)
+        super(DistributedProcessProxy, self).shutdown_listener()
