@@ -1,0 +1,76 @@
+name: Jupyter Enterprise Gateway Tests
+on:
+  push:
+    branches: '*'
+  pull_request:
+    branches: '*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [ '3.5', '3.6', '3.7', '3.8' ]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        clean: true
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: 'x64'
+    - name: Set up Node
+      uses: actions/setup-node@v1
+      with:
+         node-version: '12.13'
+    - name: Display dependency info
+      run: |
+        python --version
+        pip --version
+    - name: Add SBT launcher
+      run: |
+        mkdir -p $HOME/.sbt/launchers/1.2.1
+        curl -L -o $HOME/.sbt/launchers/1.2.1/sbt-launch.jar https://repo1.maven.org/maven2/org/scala-sbt/sbt-launch/1.2.1/sbt-launch.jar
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade setuptools pip websocket-client flake8
+    - name: Build and deploy Enterprise Gateway
+      uses: nick-invision/retry@v1.0.0
+      with:
+        timeout_minutes: 10
+        max_attempts: 2
+        command: |
+          make env clean dist enterprise-gateway-demo
+          pip install dist/*.whl coverage
+    - name: Log current Python dependencies version
+      run: |
+        pip freeze
+    - name: Log current Enterprise Gateway version
+      run: |
+        jupyter enterprisegateway --help
+    - name: Lint code
+      run: |
+        flake8 enterprise_gateway
+    - name: Run tests
+      uses: nick-invision/retry@v1.0.0
+      with:
+        timeout_minutes: 3
+        max_attempts: 1
+        command: |
+          nosetests -x --process-restartworker --with-coverage --cover-package=enterprise_gateway enterprise_gateway.tests
+    - name: Run integration tests
+      run: |
+        echo "Starting integration tests ..."
+        make itest-yarn
+    - name: Collect logs
+      if: failure()
+      run: |
+        echo "Build failed"
+        python --version
+        pip --version
+        pip list
+        docker logs itest-yarn
